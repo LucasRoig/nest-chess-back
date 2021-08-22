@@ -7,6 +7,8 @@ export type DbDocument = Db & Document;
 @Schema()
 export class Db {
   _id: Types.ObjectId;
+  @Prop({default: 1})
+  nextIndex: number;
 
   @Prop({required: true})
   name: string;

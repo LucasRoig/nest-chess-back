@@ -17,10 +17,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateDbGameDto } from './dto/create-db-game.dto';
 import {DbGameService} from "./db-game.service";
 import {use} from "passport";
+import { CreateDbDocumentDto } from './dto/create-db-document.dto';
+import { DbDocumentService } from './db-document.service';
 
 @Controller('api/v1/db')
 export class DbController {
-  constructor(private readonly dbService: DbService, private readonly gameService: DbGameService) {}
+  constructor(private readonly dbService: DbService, private readonly gameService: DbGameService, private textService: DbDocumentService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -44,6 +46,7 @@ export class DbController {
     return {
       database: db,
       games: await this.gameService.findForDb(db),
+      documents: await this.textService.findForDb(db),
     };
   }
 
@@ -69,5 +72,19 @@ export class DbController {
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
     return await this.gameService.create(dto, user, db);
+  }
+
+  @Post(':id/documents')
+  @UseGuards(AuthGuard('jwt'))
+  async createText(
+    @Param('id') id: string,
+    @UserAuth() user: User,
+    @Body() dto: CreateDbDocumentDto,
+  ) {
+    const db = await this.dbService.findOne(id);
+    if (!db.owner.equals(user._id)) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    return await this.textService.create(dto, user, db);
   }
 }
